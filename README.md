@@ -63,7 +63,7 @@
   Request param:
 
   string accountNumber,
-  numer depositAmount
+  number depositAmount
 
   
 
