@@ -5,6 +5,7 @@ import com.example.banking_solution.dto.AccountRequestDTO;
 import com.example.banking_solution.models.Account;
 import com.example.banking_solution.services.AccountService;
 import com.example.banking_solution.utils.mappers.AccountDTOMapper;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+
 
 @RestController
 @RequestMapping("/accounts")
@@ -30,7 +32,7 @@ public class AccountController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createAccount(@RequestBody AccountRequestDTO accountRequestDTO) {
+    public ResponseEntity<?> createAccount(@Valid @RequestBody AccountRequestDTO accountRequestDTO) {
 
         Account account = accountService.createAccount(accountRequestDTO);
 
@@ -66,7 +68,6 @@ public class AccountController {
                                                       @RequestParam BigDecimal withdrawAmount) {
 
         Account account = accountService.withdrawFundsFromAnAccount(accountNumber, withdrawAmount);
-
         return ResponseEntity.ok(accountDTOMapper.apply(account));
     }
 

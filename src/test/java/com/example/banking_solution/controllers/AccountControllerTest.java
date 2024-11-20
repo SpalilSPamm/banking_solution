@@ -5,8 +5,10 @@ import com.example.banking_solution.dto.AccountDTO;
 import com.example.banking_solution.dto.AccountRequestDTO;
 import com.example.banking_solution.models.Account;
 import com.example.banking_solution.services.AccountService;
+import com.example.banking_solution.utils.enums.RoleType;
 import com.example.banking_solution.utils.exceptions.AccountNotFoundException;
 import com.example.banking_solution.utils.exceptions.InsufficientFundsException;
+import com.example.banking_solution.utils.exceptions.PasswordDontMatchException;
 import com.example.banking_solution.utils.mappers.AccountDTOMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,20 +53,28 @@ public class AccountControllerTest {
 
         firstAccount.setId(UUID.randomUUID().toString());
         firstAccount.setBalance(BigDecimal.valueOf(0));
+        firstAccount.setEmail("email@gmail.com");
+        firstAccount.setPassword("password");
         firstAccount.setAccountNumber("000000001");
+        firstAccount.setRole(RoleType.USER);
 
         Account secondAccount = new Account();
 
         secondAccount.setId(UUID.randomUUID().toString());
         secondAccount.setBalance(BigDecimal.valueOf(100.00));
+        secondAccount.setEmail("email@gmail.com");
+        secondAccount.setPassword("password");
         secondAccount.setAccountNumber("000000002");
+        secondAccount.setRole(RoleType.USER);
 
         Account thirdAccount = new Account();
 
         thirdAccount.setId(UUID.randomUUID().toString());
         thirdAccount.setBalance(BigDecimal.valueOf(1000.00));
+        thirdAccount.setEmail("email@gmail.com");
+        thirdAccount.setPassword("password");
         thirdAccount.setAccountNumber("000000003");
-
+        thirdAccount.setRole(RoleType.USER);
 
         accounts = List.of(firstAccount, secondAccount, thirdAccount);
     }
@@ -72,7 +82,8 @@ public class AccountControllerTest {
     @Test
     void createAccount_returnCreate() throws Exception {
 
-        AccountRequestDTO accountRequestDTO = new AccountRequestDTO();
+        AccountRequestDTO accountRequestDTO = new AccountRequestDTO("email@email.com",
+                 "password", "password");
 
         Account account = accounts.get(0);
 
@@ -91,6 +102,27 @@ public class AccountControllerTest {
                 .andExpect(jsonPath("$.accountNumber", equalTo("000000001")))
                 .andExpect(jsonPath("$.balance", equalTo("0")));
     }
+
+    @Test
+
+    void createAccount_returnBadRequest_whenPasswordAndConfirmPasswordDontMatch() throws Exception {
+
+        AccountRequestDTO accountRequestDTO = new AccountRequestDTO("email@email.com",
+                "password", "differentPassword");
+
+        when(accountService.createAccount(accountRequestDTO))
+                .thenThrow(new PasswordDontMatchException("Password and confirm password don't match"));
+
+        this.mockMvc.perform(
+                        post("/accounts/create")
+                                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                                .content(TestUtil.convertObjectToJsonBytes(accountRequestDTO))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("error"))
+                .andExpect(jsonPath("$.message").value("Password and confirm password don't match"));
+    }
+
 
     @Test
     void getAccountByAccountNumber_returnOk() throws Exception {

@@ -2,6 +2,7 @@ package com.example.banking_solution.utils.mappers;
 
 import com.example.banking_solution.dto.AccountDTO;
 import com.example.banking_solution.models.Account;
+import com.example.banking_solution.utils.enums.RoleType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +23,7 @@ public class AccountDTOMapperTest {
         Account newAccount = new Account();
         newAccount.setAccountNumber("123456789");
         newAccount.setBalance(BigDecimal.valueOf(1000.50));
-
+        newAccount.setRole(RoleType.USER);
         account = newAccount;
     }
 
@@ -33,5 +34,6 @@ public class AccountDTOMapperTest {
         assertNotNull(accountDTO);
         assertEquals(account.getAccountNumber(), accountDTO.accountNumber());
         assertEquals(account.getBalance().toString(), accountDTO.balance());
+        assertEquals(account.getRole().toString(), accountDTO.role());
     }
 }

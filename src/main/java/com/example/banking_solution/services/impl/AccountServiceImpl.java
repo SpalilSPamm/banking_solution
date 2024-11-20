@@ -1,16 +1,20 @@
-package com.example.banking_solution.services;
+package com.example.banking_solution.services.impl;
 
 import com.example.banking_solution.dto.AccountRequestDTO;
 import com.example.banking_solution.models.Account;
 import com.example.banking_solution.repositories.AccountRepository;
+import com.example.banking_solution.services.AccountService;
 import com.example.banking_solution.utils.AccountNumberGenerator;
+import com.example.banking_solution.utils.enums.RoleType;
 import com.example.banking_solution.utils.exceptions.AccountNotFoundException;
 import com.example.banking_solution.utils.exceptions.InsufficientFundsException;
+import com.example.banking_solution.utils.exceptions.PasswordDontMatchException;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,7 +25,6 @@ import java.util.UUID;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AccountServiceImpl implements AccountService {
-
 
     AccountRepository accountRepository;
     AccountNumberGenerator accountNumberGenerator;
@@ -34,12 +37,18 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    //@Transactional
+    @Transactional
     public Account createAccount(AccountRequestDTO accountRequestDTO) {
+
+        if (!accountRequestDTO.password().equals(accountRequestDTO.confirmPassword())) {
+            throw new PasswordDontMatchException("Password and confirm password don't match");
+        }
 
         Account account = new Account();
 
         account.setId(UUID.randomUUID().toString());
+        account.setEmail(accountRequestDTO.email());
+        account.setPassword(accountRequestDTO.password());
 
         String accountNumber;
 
@@ -49,6 +58,7 @@ public class AccountServiceImpl implements AccountService {
 
         account.setAccountNumber(accountNumber);
         account.setBalance(BigDecimal.valueOf(0.0));
+        account.setRole(RoleType.USER);
 
         account =  accountRepository.save(account);
 
@@ -58,7 +68,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Account findByAccountNumber(String accountNumber) {
 
         if (accountNumber == null || accountNumber.isBlank()) {
@@ -74,13 +84,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<Account> getAll() {
         return accountRepository.findAll();
     }
 
     @Override
-   // @Transactional
+    @Transactional
     public Account depositFundsIntoAnAccount(String accountNumber, BigDecimal depositAmount) {
 
         if (depositAmount.compareTo(BigDecimal.ZERO) <= 0 || depositAmount.scale() > 2 ) {
@@ -98,7 +108,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    //@Transactional
+    @Transactional
     public Account withdrawFundsFromAnAccount(String accountNumber, BigDecimal withdrawAmount) {
 
         if (withdrawAmount.compareTo(BigDecimal.ZERO) <= 0 || withdrawAmount.scale() > 2 ) {
@@ -120,7 +130,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    //@Transactional
+    @Transactional
     public void transferFundsBetweenTwoAccount(String senderAccountNumber, String receiverAccountNumber, BigDecimal transferAmount) {
 
         if (senderAccountNumber.equals(receiverAccountNumber)) {
@@ -150,5 +160,4 @@ public class AccountServiceImpl implements AccountService {
 
         log.info("Transfer of {} from account {} to account {} completed", transferAmount, senderAccountNumber, receiverAccountNumber);
     }
-
 }

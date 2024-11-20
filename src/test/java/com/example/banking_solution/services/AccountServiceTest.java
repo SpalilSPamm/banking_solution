@@ -3,9 +3,12 @@ package com.example.banking_solution.services;
 import com.example.banking_solution.dto.AccountRequestDTO;
 import com.example.banking_solution.models.Account;
 import com.example.banking_solution.repositories.AccountRepository;
+import com.example.banking_solution.services.impl.AccountServiceImpl;
 import com.example.banking_solution.utils.AccountNumberGenerator;
+import com.example.banking_solution.utils.enums.RoleType;
 import com.example.banking_solution.utils.exceptions.AccountNotFoundException;
 import com.example.banking_solution.utils.exceptions.InsufficientFundsException;
+import com.example.banking_solution.utils.exceptions.PasswordDontMatchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,20 +52,28 @@ class AccountServiceTest {
 
         firstAccount.setId(UUID.randomUUID().toString());
         firstAccount.setBalance(BigDecimal.valueOf(0));
+        firstAccount.setEmail("email@gmail.com");
+        firstAccount.setPassword("password");
         firstAccount.setAccountNumber("000000001");
+        firstAccount.setRole(RoleType.USER);
 
         Account secondAccount = new Account();
 
         secondAccount.setId(UUID.randomUUID().toString());
         secondAccount.setBalance(BigDecimal.valueOf(100.00));
+        secondAccount.setEmail("email@gmail.com");
+        secondAccount.setPassword("password");
         secondAccount.setAccountNumber("000000002");
+        secondAccount.setRole(RoleType.USER);
 
         Account thirdAccount = new Account();
 
         thirdAccount.setId(UUID.randomUUID().toString());
         thirdAccount.setBalance(BigDecimal.valueOf(1000.00));
+        thirdAccount.setEmail("email@gmail.com");
+        thirdAccount.setPassword("password");
         thirdAccount.setAccountNumber("000000003");
-
+        thirdAccount.setRole(RoleType.USER);
 
         accounts = List.of(firstAccount, secondAccount, thirdAccount);
     }
@@ -70,9 +81,13 @@ class AccountServiceTest {
     @Test
     void createAccount_successfully_whereGeneratedAccountNumberIsUnique() {
 
-        AccountRequestDTO accountRequestDTO = new AccountRequestDTO();
+
+        AccountRequestDTO accountRequestDTO = new AccountRequestDTO("email@email.com",
+                "password", "password");
 
         var newAccount = accounts.get(0);
+        String encodedPassword = "encodedPassword";
+        newAccount.setPassword(encodedPassword);
 
         when(accountRepository.existsAccountByAccountNumber(any()))
                 .thenReturn(false);
@@ -83,6 +98,9 @@ class AccountServiceTest {
 
         assertNotNull(newAccount.getId());
         assertEquals(result.getAccountNumber(), newAccount.getAccountNumber());
+        assertEquals(newAccount.getEmail(), result.getEmail());
+        assertEquals(encodedPassword, result.getPassword());
+        assertEquals(newAccount.getRole(), result.getRole());
 
         verify(accountNumberGenerator, Mockito.times(1)).generateAccountNumber();
 
@@ -91,9 +109,12 @@ class AccountServiceTest {
     @Test
     void createAccount_successfully_whereGeneratedAccountNumberIsNotUniqueTheFirstTime() {
 
-        AccountRequestDTO accountRequestDTO = new AccountRequestDTO();
+        AccountRequestDTO accountRequestDTO = new AccountRequestDTO("email@email.com",
+                "password", "password");
 
         var newAccount  = accounts.get(0);
+        String encodedPassword = "encodedPassword";
+        newAccount.setPassword(encodedPassword);
 
         when(accountNumberGenerator.generateAccountNumber()).thenReturn("000000001");
         when(accountRepository.existsAccountByAccountNumber(any()))
@@ -105,10 +126,25 @@ class AccountServiceTest {
 
         assertNotNull(newAccount.getId());
         assertEquals(newAccount.getAccountNumber(), result.getAccountNumber());
+        assertEquals(newAccount.getEmail(), result.getEmail());
         assertEquals(BigDecimal.valueOf(0), newAccount.getBalance());
-        verify(accountNumberGenerator, Mockito.times(2)).generateAccountNumber();
+        assertEquals(encodedPassword, result.getPassword());
+        assertEquals(newAccount.getRole(), result.getRole());
 
+        verify(accountNumberGenerator, Mockito.times(2)).generateAccountNumber();
         verify(accountRepository, Mockito.times(2)).existsAccountByAccountNumber(any());
+    }
+
+    @Test
+    void createAccount_whenPasswordDontMatch() {
+
+        AccountRequestDTO accountRequestDTO = new AccountRequestDTO("email@email.com",
+                "password", "differentPassword");
+
+        assertThrows(PasswordDontMatchException.class, () -> accountServiceImpl.createAccount(accountRequestDTO));
+
+        verify(accountNumberGenerator, Mockito.times(0)).generateAccountNumber();
+        verify(accountRepository, Mockito.times(0)).existsAccountByAccountNumber(any());
     }
 
     @Test
@@ -116,12 +152,17 @@ class AccountServiceTest {
 
         String accountNumber = "000000002";
 
-        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(accounts.get(1)));
+        Account account = accounts.get(1);
+
+        when(accountRepository.findByAccountNumber(accountNumber)).thenReturn(Optional.of(account));
 
         var result = accountServiceImpl.findByAccountNumber(accountNumber);
 
         assertNotNull(result);
         assertEquals(accountNumber, result.getAccountNumber());
+        assertEquals(account.getEmail(), result.getEmail());
+        assertEquals(account.getBalance(), result.getBalance());
+        assertEquals(account.getRole(), result.getRole());
 
         verify(accountRepository, times(1)).findByAccountNumber(accountNumber);
 

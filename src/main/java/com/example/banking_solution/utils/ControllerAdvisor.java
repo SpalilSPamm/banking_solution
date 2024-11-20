@@ -2,6 +2,7 @@ package com.example.banking_solution.utils;
 
 import com.example.banking_solution.utils.exceptions.AccountNotFoundException;
 import com.example.banking_solution.utils.exceptions.InsufficientFundsException;
+import com.example.banking_solution.utils.exceptions.PasswordDontMatchException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +49,19 @@ public class ControllerAdvisor {
     @ExceptionHandler(InsufficientFundsException.class)
     public ResponseEntity<Object> handleInsufficientFundsException(
             InsufficientFundsException ex
+    ) {
+        Map<String, Object> body = new HashMap<>();
+
+        body.put("status", "error");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(PasswordDontMatchException.class)
+    public ResponseEntity<Object> handlePasswordDontMatchException(
+            PasswordDontMatchException ex
     ) {
         Map<String, Object> body = new HashMap<>();
 

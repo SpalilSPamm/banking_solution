@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - property:
+      name: u_id
+      value: uuid()
+      dbms: postgresql
+  - changeSet:
+      id: create-bank_accounts
+      author: KirillPivvovarov
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - tableExists:
+                tableName: bank_accounts
+      changes:
+        - createTable:
+            tableName: bank_accounts
+            columns:
+              - column:
+                  name: id
+                  type: varchar(255)
+                  valueComputed: ${u_id}
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: account_number
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: decimal
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
